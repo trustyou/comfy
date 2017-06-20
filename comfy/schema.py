@@ -1,7 +1,9 @@
 try:
-    from configparser import ConfigParser
+    from configparser import ConfigParser, NoOptionError
 except ImportError:
-    from ConfigParser import ConfigParser
+    # Python 2
+    from ConfigParser import ConfigParser, NoOptionError
+
 from inspect import getmembers, isclass
 from typing import Any, Optional, Type
 
@@ -60,6 +62,17 @@ class Section:
             if isinstance(value, BaseOption):
                 option = value  # type: BaseOption
                 option.set_name(name)
+                self.validate(option)
+
+    def validate(self, option):
+        # type: (BaseOption) -> None
+
+        try:
+            option.__get__(self)
+        except (ValueError, TypeError, NoOptionError) as e: 
+            message = "Validation error ({}.{}).\nDetails: {}".format(self.name, option.name, e)
+            e.args = (message, ) + e.args[1:]
+            raise 
 
 
 class BaseOption:

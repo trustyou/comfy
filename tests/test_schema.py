@@ -48,36 +48,29 @@ def test_smoke(my_config):
     with pytest.raises(AttributeError):
         del my_config.tmp_directories.vid_tmp
 
+def _test_error(config, Error):
+    # type: (str, Exception) -> None
 
-@pytest.fixture
-def broken_config():
-    # type: () -> MyConfig
     config_parser = ConfigParser()
-    read_config_string(config_parser, """
+    read_config_string(config_parser, config)
+    with pytest.raises(Error):
+        config = MyConfig(config_parser)
+
+
+def test_missing_option():
+    config = """
 [tmp_directories]
 img_tmp=/tmp/img
 # vid_tmp is missing
-max_files=hundreds  # not an int
-    """)
-    config = MyConfig(config_parser)
-    return config
+max_files=1024
+    """
+    _test_error(config, NoOptionError)
 
-
-def test_error_handling(broken_config):
-    # type: (MyConfig) -> None
-
-    # Unexpected section
-    with pytest.raises(AttributeError):
-        print(broken_config.nonexistent_section)
-
-    # Unexpected option
-    with pytest.raises(AttributeError):
-        print(broken_config.tmp_directories.wav_tmp)
-
-    # Missing option value
-    with pytest.raises(NoOptionError):
-        val = broken_config.tmp_directories.vid_tmp
-
-    # Wrong type
-    with pytest.raises(ValueError):
-        val = broken_config.tmp_directories.max_files
+def test_wrong_int_value():
+    config = """
+[tmp_directories]
+img_tmp=/tmp/img
+vid_tmp=/tmp/vid
+max_files=not_a_int  
+    """
+    _test_error(config, ValueError)
