@@ -77,24 +77,47 @@ class Section:
 
 class BaseOption:
     """
-    Base class for options. Subclass this and override __get__ to define new option types.
+    Base class for options.
+
+    Subclass this and override unserialize() and serialize() to define new option types.
     """
 
     def __init__(self):
         self.name = None  # type: str
 
-    def __get__(self, obj, type=None):
-        # type: (Section, Optional[type]) -> Any
+    def unserialize(self, value):
+        # type: (String) -> Any
         # Override in sub classes.
         raise NotImplementedError()
 
-    def __set__(self, obj, value):
-        # Assignment currently unsupported.
-        raise AttributeError()
+    def serialize(self, new_value):
+        """Checks if the value corresponds to the type of option.
 
-    def __delete__(self, obj):
-        # Deletion currently unsupported.
-        raise AttributeError()
+        Returns a string, which will be stored in the config_parser instance.
+
+        Raises ValueError if new_value does not meet expectations.
+        """
+        # type: (Any) -> String
+        raise NotImplementedError()
+
+    def __get__(self, section, type=None):
+        config_parser = section.config_parser
+
+        raw_value = config_parser.get(section.name, self.name)
+
+        return self.unserialize(raw_value)
+
+    def __set__(self, section, new_value):
+        config_parser = section.config_parser
+
+        raw_value = self.serialize(new_value)
+
+        config_parser.set(section.name, self.name, raw_value)
+
+    def __delete__(self, section):
+        config_parser = section.config_parser
+
+        config_parser.remove_option(section.name, self.name)
 
     def set_name(self, name):
         # type: (str) -> None

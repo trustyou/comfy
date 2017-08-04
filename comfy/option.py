@@ -5,37 +5,50 @@ from comfy.schema import BaseOption, Section
 
 class Option(BaseOption):
 
-    def __get__(self, section, type=None):
-        # type: (Section, Optional[type]) -> str
-        config_parser = section.config_parser
-        return config_parser.get(section.name, self.name)
+    def unserialize(self, value):
+        return value
+
+    def serialize(self, new_value):
+        if not isinstance(new_value, str):
+            raise ValueError("New value should be a string.")
+        return str(new_value)
 
 
 class IntOption(BaseOption):
 
-    def __get__(self, section, type=None):
-        # type: (Section, Optional[type]) -> int
-        config_parser = section.config_parser
-        return config_parser.getint(section.name, self.name)
+    def unserialize(self, raw_value):
+        return int(raw_value)
+
+    def serialize(self, new_value):
+        if not isinstance(new_value, int):
+            raise ValueError("New value should be an int.")
+
+        return str(new_value)
 
 
 class BoolOption(BaseOption):
 
     truth_values = {"1", "yes", "true"}
 
-    def __get__(self, section, type=None):
-        # type: (Section, Optional[type]) -> bool
-        config_parser = section.config_parser
-        value = config_parser.get(section.name, self.name)
-        return value.lower() in self.truth_values
+    def unserialize(self, raw_value):
+        return raw_value.lower() in self.truth_values
+
+    def serialize(self, new_value):
+        if not isinstance(new_value, bool):
+            raise ValueError("New value should be a boolean.")
+
+        return str(new_value).lower()
 
 
 class ListOption(BaseOption):
 
-    def __get__(self, section, type=None):
-        # type: (Section, Optional[type]) -> List[str]
-        config_parser = section.config_parser
-        values = config_parser.get(section.name, self.name)
-        if values.strip() == "":
+    def unserialize(self, raw_value):
+        if raw_value.strip() == "":
             return []
-        return [value.strip() for value in values.split(",")]
+        return [value.strip() for value in raw_value.split(",")]
+
+    def serialize(self, new_value):
+        if not isinstance(new_value, list):
+            raise ValueError("New value should be a list.")
+
+        return ','.join(new_value)
