@@ -5,7 +5,7 @@ except ImportError:
     from ConfigParser import ConfigParser, NoOptionError
 
 from inspect import getmembers, isclass
-from typing import Any, Optional, Type
+from typing import Any, Optional, Type, Text
 
 from comfy.util import camel_case_to_lower
 
@@ -86,21 +86,22 @@ class BaseOption:
         self.name = None  # type: str
 
     def unserialize(self, value):
-        # type: (String) -> Any
+        # type: (Text) -> Any
         # Override in sub classes.
         raise NotImplementedError()
 
     def serialize(self, new_value):
+        # type: (Any) -> Text
         """Checks if the value corresponds to the type of option.
 
         Returns a string, which will be stored in the config_parser instance.
 
         Raises ValueError if new_value does not meet expectations.
         """
-        # type: (Any) -> String
         raise NotImplementedError()
 
     def __get__(self, section, type=None):
+        # type: (Section, Optional[type]) -> Any
         config_parser = section.config_parser
 
         raw_value = config_parser.get(section.name, self.name)
@@ -108,6 +109,7 @@ class BaseOption:
         return self.unserialize(raw_value)
 
     def __set__(self, section, new_value):
+        # type: (Section, Any) -> None
         config_parser = section.config_parser
 
         raw_value = self.serialize(new_value)
