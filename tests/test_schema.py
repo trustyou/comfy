@@ -42,11 +42,15 @@ def test_smoke(my_config):
     assert my_config.tmp_directories.vid_tmp == "/tmp/vid"
     assert my_config.tmp_directories.max_files == 1024
 
-    # Assignment and deletion are currently unsupported!
-    with pytest.raises(AttributeError):
-        my_config.tmp_directories.vid_tmp = "/tmp/videos"
-    with pytest.raises(AttributeError):
-        del my_config.tmp_directories.vid_tmp
+    new_val = "/tmp/videos"
+    my_config.tmp_directories.vid_tmp = new_val
+    assert my_config.tmp_directories.vid_tmp == new_val
+    assert my_config.config_parser.get("tmp_directories", "vid_tmp") == new_val
+
+    del my_config.tmp_directories.vid_tmp
+    with pytest.raises(NoOptionError):
+        assert my_config.tmp_directories.vid_tmp == new_val
+
 
 def _test_error(config, Error):
     # type: (str, Exception) -> None
