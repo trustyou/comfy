@@ -11,11 +11,11 @@ from comfy.util import read_config_string
 
 
 class MyConfig(Schema):
-
     class TmpDirectories(Section):
         img_tmp = Option()
         vid_tmp = Option()
         max_files = IntOption()
+
     tmp_directories = None  # type: TmpDirectories
 
 
@@ -70,6 +70,7 @@ max_files=1024
     """
     _test_error(config, NoOptionError)
 
+
 def test_wrong_int_value():
     config = """
 [tmp_directories]
@@ -78,3 +79,22 @@ vid_tmp=/tmp/vid
 max_files=not_a_int  
     """
     _test_error(config, ValueError)
+
+
+def test_parse_cli_args(my_config):
+    # type: (MyConfig) -> None
+    args = ["--tmp_directories_max_files", "512"]
+    my_config.parse_cli_args(args)
+
+    assert my_config.tmp_directories.img_tmp == "/tmp/img"
+    assert my_config.tmp_directories.vid_tmp == "/tmp/vid"
+    assert my_config.tmp_directories.max_files == 512
+
+
+def test_parse_cli_args_with_unknown(my_config):
+    # type: (MyConfig) -> None
+    args = ["--tmp_directories_unknown", "512"]
+    my_config.parse_cli_args(args)
+
+    with pytest.raises(AttributeError):
+        assert my_config.tmp_directories.unknown == 512
