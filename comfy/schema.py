@@ -1,13 +1,14 @@
 try:
-    from configparser import ConfigParser, NoOptionError
+    from configparser import ConfigParser, NoOptionError, NoSectionError
 except ImportError:
     # Python 2
     from ConfigParser import ConfigParser, NoOptionError
 
 from inspect import getmembers, isclass
-from typing import Any, Optional, Type, Text
+from typing import Any, Optional, Type, Text, List, Tuple
 
 from comfy.util import camel_case_to_lower
+from comfy.args import overwrite_options
 
 
 class Schema:
@@ -40,6 +41,19 @@ class Schema:
                 section = section_class(section_name, config_parser)
                 setattr(self, section_name, section)
 
+    def parse_cli_args(self, args):
+        overwrite_options(args, self)
+
+    def get_sections(self):
+        # type: () -> List[Section]
+        """
+        Retrieves all the section instances defined for this section.
+
+        :return: a list of of sections
+        """
+        return [getattr(self, attribute_name) for attribute_name in dir(self) if
+                isinstance(getattr(self, attribute_name), Section)]
+
 
 class Section:
     """
@@ -58,21 +72,35 @@ class Section:
 
         # Find any options in this section, and let them know about their name in this section
         # This is a poor man's __set_name__ :)
-        for name, value in getmembers(type(self)):
-            if isinstance(value, BaseOption):
-                option = value  # type: BaseOption
-                option.set_name(name)
-                self.validate(option)
+        for name, option in self.get_options():
+            option.set_name(name)
+            self.validate(option)
+
+    def get_options(self):
+        # type: () -> List[Tuple[String, Option]]
+        """
+        Returns a list of all the options defined for this section together with their names.
+
+        E.g.
+        class MySection(Section):
+            option1 = IntOption()
+            option2 = Option()
+
+        Will return [("option1", option1), ("option2", option2)]
+
+        :return: list of options
+        """
+        return [(name, option) for name, option in getmembers(type(self)) if isinstance(option, BaseOption)]
 
     def validate(self, option):
         # type: (BaseOption) -> None
 
         try:
             option.__get__(self)
-        except (ValueError, TypeError, NoOptionError) as e: 
+        except (ValueError, TypeError, NoOptionError) as e:
             message = "Validation error ({}.{}).\nDetails: {}".format(self.name, option.name, e)
-            e.args = (message, ) + e.args[1:]
-            raise 
+            e.args = (message,) + e.args[1:]
+            raise
 
 
 class BaseOption:
