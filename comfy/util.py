@@ -7,6 +7,11 @@ except ImportError:
 
 import re
 import sys
+import platform
+
+
+def is_python2():
+    return platform.python_version_tuple()[0] == '2'
 
 
 def camel_case_to_lower(name):

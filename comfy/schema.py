@@ -7,11 +7,11 @@ except ImportError:
 from inspect import getmembers, isclass
 from typing import Any, Optional, Type, Text, List, Tuple
 
-from comfy.util import camel_case_to_lower
+from comfy.util import camel_case_to_lower, is_python2
 from comfy.args import overwrite_options
 
 
-class Schema:
+class Schema(object):
     """
     Base class for config file schema definition.
 
@@ -55,7 +55,7 @@ class Schema:
                 isinstance(getattr(self, attribute_name), Section)]
 
 
-class Section:
+class Section(object):
     """
     Corresponds to a [section] in a config file.
 
@@ -90,6 +90,9 @@ class Section:
 
         :return: list of options
         """
+        if is_python2:
+            return [(name, option) for name, option in type(self).__dict__.items() if isinstance(option, BaseOption)]
+
         return [(name, option) for name, option in getmembers(type(self)) if isinstance(option, BaseOption)]
 
     def validate(self, option):
@@ -103,7 +106,7 @@ class Section:
             raise
 
 
-class BaseOption:
+class BaseOption(object):
     """
     Base class for options.
 
