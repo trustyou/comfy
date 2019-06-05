@@ -1,5 +1,8 @@
 from argparse import ArgumentParser
-from typing import List, AnyStr
+from typing import TYPE_CHECKING, List, AnyStr
+
+if TYPE_CHECKING:
+    from comfy.schema import Schema
 
 
 def get_arg_name(section_name, option_name):
