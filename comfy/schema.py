@@ -77,7 +77,7 @@ class Section(object):
             self.validate(option)
 
     def get_options(self):
-        # type: () -> List[Tuple[String, Option]]
+        # type: () -> List[Tuple[str, BaseOption]]
         """
         Returns a list of all the options defined for this section together with their names.
 
@@ -114,7 +114,8 @@ class BaseOption(object):
     """
 
     def __init__(self):
-        self.name = None  # type: str
+        # type: () -> None
+        self.name = NotImplemented  # type: str
 
     def unserialize(self, value):
         # type: (Text) -> Any

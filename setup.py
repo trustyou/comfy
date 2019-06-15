@@ -13,4 +13,6 @@ setuptools.setup(
     install_requires=[
         'typing;python_version<"3.5"'
     ],
+    include_package_data=True,
+    package_data={'comfy': ['py.typed']},
 )
